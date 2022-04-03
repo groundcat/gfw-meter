@@ -11,24 +11,44 @@ include('../functions.php');
 
 // Insert the new domain to the database from form submission
 if (isset($_POST['domain']) && !isset($_POST['enabled'])) {
+
     $domain = $_POST['domain'];
+
     // Validate the domain
     if (!preg_match('/^(?!\-)(?:(?:[a-zA-Z\d][a-zA-Z\d\-]{0,61})?[a-zA-Z\d]\.){1,126}(?!\d+)[a-zA-Z\d]{1,63}$/', $domain) || !filter_var($domain, FILTER_VALIDATE_DOMAIN)) {
         echo '{"error":"Invalid domain","code":400}';
         exit;
     }
+
     // Validate if the domain is accessible
     if (checkdnsrr($domain, "A") === false) {
         echo '{"error":"Domain not resolved","code":400}';
         exit;
     }
 
+    // Select all domains from the database where the user_id matches the current user
+    $my_domains = app('db')->select(
+        "SELECT `domain` FROM `wm_domains` WHERE `user_id` = :id",
+        array ("id" => $userId)
+    );
+
+    // Verify if $domain is already in the my_domains array
+    $domain_exists = false;
+    foreach ($my_domains as $my_domain) {
+        if ($my_domain['domain'] == $domain) {
+            $domain_exists = true;
+            echo '{"error":"Domain already exists","code":400}';
+            exit;
+        }
+    }
+
     // Insert domain to database
     app('db')->insert('wm_domains', array(
         "domain" => $domain,
-        "user_id" => $_SESSION['user_id'],
+        "user_id" => $userId,
         "enabled" => 1
     ));
+
     // Print a success message box
     echo '<div class="alert alert-success">Domain added successfully</div>';
 }
@@ -109,9 +129,9 @@ if (isset($_POST['domain_id']) && isset($_POST['enabled'])) {
                         <td>
                             <?php if (!isset($domain['latest_score'])) : ?>
                                 <span class="badge badge-secondary">Queued</span>
-                            <?php elseif ($domain['latest_score'] > 0): ?>
+                            <?php elseif ($domain['latest_score'] >= 50): ?>
                                 <span class="badge badge-danger"><i class="fas fa-frown"></i> <?=$domain['latest_score']?>%</span>
-                            <?php elseif ($domain['latest_score'] == 0) : ?>
+                            <?php else: ?>
                                 <span class="badge badge-success"><i class="fas fa-smile"></i> <?=$domain['latest_score']?>%</span>
                             <?php endif; ?>
                         </td>
