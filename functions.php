@@ -28,7 +28,7 @@ function api_v1($domain) {
 
     // Validate if the A record exists
     if (!nslookup_A_record($domain, '1.0.0.1')) {
-        echo '{"error":"Domain A record not found","code":404}';
+        echo '{"error":"Domain not resolved","code":404}';
         exit;
     }
 
@@ -86,9 +86,7 @@ function nslookup_A_record($domain, $dns_server_ip) {
         }
 
         // Debug
-        if (DEBUG) {
-            print_r($resp);
-        }
+        // print_r($resp);
 
         // Get the A record
         $a_record_ip = $resp->answer[0]->address;
@@ -132,9 +130,7 @@ function query_node_api($detect_node_api_url, $domain, $web_server_status) {
     curl_close($ch);
 
     // Debug
-    if (DEBUG) {
-        echo $result;
-    }
+    // echo $result;
 
     return $result;
 }
@@ -274,4 +270,21 @@ function pastebin($api_paste_code, $api_paste_name) {
     }
     curl_close($ch);
     return $response;
+}
+
+function v4_UUID() {
+    return sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+      // 32 bits for the time_low
+      mt_rand(0, 0xffff), mt_rand(0, 0xffff),
+      // 16 bits for the time_mid
+      mt_rand(0, 0xffff),
+      // 16 bits for the time_hi,
+      mt_rand(0, 0x0fff) | 0x4000,
+
+      // 8 bits and 16 bits for the clk_seq_hi_res,
+      // 8 bits for the clk_seq_low,
+      mt_rand(0, 0x3fff) | 0x8000,
+      // 48 bits for the node
+      mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
+    );
 }

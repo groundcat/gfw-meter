@@ -2,8 +2,8 @@
 
 $test_id = $_GET['id'];
 
-// Validate the test_id is integer
-if (!is_numeric($test_id)) {
+// Validate the test_id is a 32 digit UUID
+if (!preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/', $test_id)) {
     echo '{"error":"Invalid test_id","code":400}';
     exit;
 }
@@ -11,7 +11,7 @@ if (!is_numeric($test_id)) {
 // Select the test result from database wm_tests where test_id matches
 include dirname(__FILE__) . '/user/ASEngine/AS.php';
 $test_result = app('db')->select(
-    "SELECT test_result_json FROM `wm_tests` WHERE `test_id` = $test_id"
+    "SELECT test_result_json FROM `wm_tests` WHERE `test_id` = '$test_id'"
 );
 
 // Validate if the test_id exists
