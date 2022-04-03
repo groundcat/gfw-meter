@@ -54,7 +54,7 @@ foreach (POLLUTED_DNS_SERVER_IPS as $key => $polluted_dns_server_ip) {
     $ip_detected_cn = nslookup_A_record($domain, $polluted_dns_server_ip);
     // Validate the result
     if ($ip_detected_cn === false) {
-        $polluted_dns_server_results[$key]["error"] = "Bad Gateway: DNS is down or DNS query denied by ISP";
+        $polluted_dns_server_results[$key]["error"] = "Bad Gateway: The name server was unable to process this query due to a problem with the name server.";
         $polluted_dns_server_results[$key]["code"] = 502;
         continue; // Skip this iteration
     }
@@ -76,7 +76,7 @@ foreach (POLLUTED_DNS_SERVER_IPS as $key => $polluted_dns_server_ip) {
         $detection_result = 'no blocking detected';
         $blocked = 0;
     } else {
-        $detection_result = 'detected possible DNS pollution';
+        $detection_result = 'detected DNS poisoning';
         $blocked = 1;
     }
 
@@ -95,7 +95,10 @@ foreach (POLLUTED_DNS_SERVER_IPS as $key => $polluted_dns_server_ip) {
     // Compare web_server_status, 
     // if the DNS matches, but the web_server_status is not matched, then the website is still blocked
     if ($blocked == 0 && $web_server_status_us !== $web_server_status_cn) {
-        $detection_result = 'detected possible TCP connection reset';
+        $detection_result = 'detected TCP reset attack';
+        $blocked = 1;
+    } elseif ($blocked == 1 && $web_server_status_us !== $web_server_status_cn) {
+        $detection_result = 'detected DNS poisoning and TCP reset attack';
         $blocked = 1;
     }
 
@@ -136,7 +139,7 @@ if ($score > 1.0) {
 }
 
 // Round to 2 decimal places
-$score = round($score, 2);
+$score = floatval(round($score, 2));
 
 // Add pollution score to the polluted_dns_server_results array
 $polluted_dns_server_results['percentage_blocking_score'] = $score;

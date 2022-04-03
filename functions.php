@@ -78,15 +78,32 @@ function nslookup_A_record($domain, $dns_server_ip) {
 
     try {
         $resolver = new Net_DNS2_Resolver(array('nameservers' => array($dns_server_ip)));
+
         $resp = $resolver->query($domain, 'A');
+        // If A record not found, try with CNAME record
+        if (!$resp) {
+            $resp = $resolver->query($domain, 'CNAME');
+        }
 
         // Debug
         if (DEBUG) {
             print_r($resp);
         }
 
-        // Print the A record
+        // Get the A record
         $a_record_ip = $resp->answer[0]->address;
+        if (!filter_var($a_record_ip, FILTER_VALIDATE_IP)) {
+            $a_record_ip = $resp->answer[1]->address;
+        }
+        if (!filter_var($a_record_ip, FILTER_VALIDATE_IP)) {
+            $a_record_ip = $resp->answer[2]->address;
+        }
+        if (!filter_var($a_record_ip, FILTER_VALIDATE_IP)) {
+            $cname_name = $resp->answer[0]->name;
+            $resp_2 = $resolver->query($cname_name, 'A');
+            $a_record_ip = $resp_2->answer[0]->address;
+        }
+        
     }
 
     // Catch the exception

@@ -1,2 +1,5 @@
 config.php
 user/ASEngine/ASConfig.php
+user/ASEngine/ASConfig-dev.php
+user/ASEngine/ASConfig-prod.php
+test.php
