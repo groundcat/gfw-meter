@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Apr 01, 2022 at 11:21 PM
+-- Generation Time: Apr 03, 2022 at 11:12 AM
 -- Server version: 10.4.21-MariaDB-cll-lve
 -- PHP Version: 7.2.34
 
@@ -123,7 +123,7 @@ CREATE TABLE `wm_domains` (
   `enabled` tinyint(1) NOT NULL,
   `created_time` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `latest_test_time` datetime DEFAULT NULL,
-  `latest_test_id` int(11) DEFAULT NULL,
+  `latest_test_id` varchar(36) COLLATE utf8_unicode_ci DEFAULT NULL,
   `latest_score` double DEFAULT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
@@ -147,7 +147,7 @@ CREATE TABLE `wm_notifications` (
 --
 
 CREATE TABLE `wm_tests` (
-  `test_id` int(11) NOT NULL,
+  `test_id` varchar(36) COLLATE utf8_unicode_ci NOT NULL,
   `domain` varchar(60) COLLATE utf8_unicode_ci NOT NULL,
   `test_result_json` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
   `timestamp` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
@@ -180,7 +180,8 @@ ALTER TABLE `as_social_logins`
 --
 ALTER TABLE `as_users`
   ADD PRIMARY KEY (`user_id`),
-  ADD UNIQUE KEY `username` (`username`);
+  ADD UNIQUE KEY `username` (`username`),
+  ADD UNIQUE KEY `user_id` (`user_id`);
 
 --
 -- Indexes for table `as_user_details`
@@ -204,13 +205,15 @@ ALTER TABLE `wm_domains`
 -- Indexes for table `wm_notifications`
 --
 ALTER TABLE `wm_notifications`
-  ADD PRIMARY KEY (`notification_id`);
+  ADD PRIMARY KEY (`notification_id`),
+  ADD UNIQUE KEY `notification_id` (`notification_id`);
 
 --
 -- Indexes for table `wm_tests`
 --
 ALTER TABLE `wm_tests`
-  ADD PRIMARY KEY (`test_id`);
+  ADD PRIMARY KEY (`test_id`),
+  ADD UNIQUE KEY `test_id` (`test_id`);
 
 --
 -- AUTO_INCREMENT for dumped tables
@@ -263,12 +266,6 @@ ALTER TABLE `wm_domains`
 --
 ALTER TABLE `wm_notifications`
   MODIFY `notification_id` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `wm_tests`
---
-ALTER TABLE `wm_tests`
-  MODIFY `test_id` int(11) NOT NULL AUTO_INCREMENT;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
