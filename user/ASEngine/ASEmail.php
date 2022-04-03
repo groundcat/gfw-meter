@@ -13,6 +13,37 @@
 class ASEmail
 {
     /**
+     * Send test report email
+     * @param string $email Where should test report email be send to.
+     * @param string $link Test report link that should be included in email body.
+     * @throws Exception
+     */
+    public function testreportEmail($email, $content)
+    {
+        // get instance of PHPMailer (including some additional info)
+        $mail = $this->getMailer();
+
+        // where you want to send test report email
+        $mail->addAddress($email);
+
+        // load email HTML template
+        $body = file_get_contents(dirname(__FILE__) . '/../templates/emails/report-mail.php');
+
+        // replace appropriate placeholders
+        $body = str_replace('{{website_name}}', WEBSITE_NAME, $body);
+        $body = str_replace('{{link}}', $link, $body);
+
+        // set subject and body
+        $mail->Subject = WEBSITE_NAME . " - Your latest testing reports";
+        $mail->Body    = $body;
+
+        // try to send the email
+        if (! $mail->send()) {
+            throw new Exception("E-Mail could not be sent. Info: {$mail->ErrorInfo}");
+        }
+    }
+
+    /**
      * Send confirmation email
      * @param string $email Where should confirmation email be send to.
      * @param string $key Confirmation key that should be included in email body.
