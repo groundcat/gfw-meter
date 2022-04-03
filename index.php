@@ -1,27 +1,71 @@
 <?php
 
 // Take domain GET request
-$domain = $_GET['domain'] ?? $_POST['domain'] ?? null;
-$shareable = $_GET['shareable'] ?? $_POST['shareable'] ?? null;
-
-// Host of the current page
-$host = $_SERVER['HTTP_HOST'];
+$domain = $_POST['domain'] ?? null;
+$shareable = $_POST['shareable'] ?? null;
 
 // Load the functions
+require_once dirname(__FILE__) . '/user/ASEngine/AS.php';
 require_once 'functions.php';
+require_once 'config.php';
 
 if (isset($domain)) {
+
+    // Validate if $domain is a valid domain name
+    if (!preg_match('/^(?!\-)(?:(?:[a-zA-Z\d][a-zA-Z\d\-]{0,61})?[a-zA-Z\d]\.){1,126}(?!\d+)[a-zA-Z\d]{1,63}$/', $domain) || !filter_var($domain, FILTER_VALIDATE_DOMAIN)) {
+      echo '{"error":"Invalid domain","code":400}';
+      exit;
+    }
+
     // Get current timestamp
     $timestamp = time();
-    $api_paste_name = $domain . '_' . $timestamp;
 
-    // Send request to the API endpoint, follow redirects
+    // Send request to the API endpoint
     $api_json = api_v1($domain);
+
+    // Send request to the pastebin API endpoint
     if ($shareable == 'yes') {
+        $api_paste_name = $domain . '_' . $timestamp;
         $pastebin_url = pastebin($api_json, $api_paste_name);
     } else {
         $pastebin_url = '';
     }
+
+    // Record the result into the database
+
+      // Get the result
+      $test_result = $api_json;
+
+      // Get the percentage_blocking_score value from the test result JSON
+      $percentage_blocking_score = json_decode($test_result, true)['percentage_blocking_score'];
+      $percentage_blocking_score = $percentage_blocking_score * 100;
+      $percentage_blocking_score = round($percentage_blocking_score, 2);
+
+      // Generate random UUID of 32 characters
+      $test_id = v4_UUID();
+
+      // Insert the test result to  table wm_tests
+      app('db')->insert('wm_tests', array(
+          "test_id" => $test_id,
+          "domain" => $domain,
+          "test_result_json" => $test_result,
+      ));
+
+      // Select all domains from the database table wm_domains
+      $users_registered_domains = app('db')->select(
+          "SELECT `domain` FROM `wm_domains` LIMIT 1"
+      );
+      // Verify if $domain is already registered by a user
+      $domain_registered_by_users = false;
+      if ($users_registered_domains['domain'] == $domain) {
+          $domain_registered_by_users = true;
+          // Update to wm_domains
+            app('db')->update('wm_domains', array(
+              "latest_test_time" => date('Y-m-d H:i:s'),
+              "latest_test_id" => $test_id,
+              "latest_score" => $percentage_blocking_score,
+          ), "domain = '$domain'");
+      }
     
 } else {
     $api_json = null;
@@ -82,7 +126,7 @@ if (isset($domain)) {
         
         <h2>WallMeter</h2>
         <p class="lead">Detect if your website is blocked in China by testing from ISPs at multiple locations</p>
-        <p class="lead">从中国大陆多个地区的不同运营商检测你的网站是否被DNS污染或阻断</p>
+        <p class="lead">从中国大陆多个地区的不同运营商检测你的网站是否被屏蔽</p>
       </div>
 
       <div class="row">
@@ -96,6 +140,7 @@ if (isset($domain)) {
               <div class="col-md-12 mb-3">
                 <label for="firstName">Domain name</label>
                 <input type="text" class="form-control" id="domain" name="domain" placeholder="example.com" value="google.com" required>
+                <input type="hidden" name="<?= ASCsrf::getTokenName() ?>" value="<?= ASCsrf::getToken() ?>">
                 <div class="invalid-feedback">
                   Valid domain name is required.
                 </div>
@@ -107,12 +152,21 @@ if (isset($domain)) {
 
             <?php if ($shareable == 'yes'): ?>
             <div class="mb-3">
-              <label>Shareable Result URL</label>
+              <label>Shareable Result URL at PasteBin.com</label>
                 <div class="alert alert-success" role="alert">
                     <a href="<?php echo $pastebin_url; ?>"><?php echo $pastebin_url; ?></a>
                 </div>
             </div>
             <?php endif; ?>
+
+            <div class="mb-3">
+              <label>Shareable Result URL at WallMeter</label>
+                <div class="alert alert-success" role="alert">
+                    <a href="<?php echo WEBSITE_DOMAIN."/test_data.php?id=".$test_id; ?>">
+                      <?php echo WEBSITE_DOMAIN."/test_data.php?id=".$test_id; ?>
+                    </a>
+                </div>
+            </div>
 
             <div class="mb-3">
               <label>Result in JSON format</label>
@@ -139,11 +193,17 @@ if (isset($domain)) {
             <?php endif; ?>
 
             <?php if (!isset($domain)): ?>
+
+              <!-- Check box -->
+              <div class="custom-control custom-checkbox mb-3">
+                <input type="checkbox" class="custom-control-input" id="shareable_wm" name="shareable_wm" value="yes" checked disabled>
+                <label class="custom-control-label" for="shareable">Make the results shareable at WallMeter</label>
+              </div>
               
               <!-- Check box -->
               <div class="custom-control custom-checkbox mb-3">
                 <input type="checkbox" class="custom-control-input" id="shareable" name="shareable" value="yes">
-                <label class="custom-control-label" for="shareable">Make it shareable</label>
+                <label class="custom-control-label" for="shareable">Make the results shareable at PasteBin.com</label>
               </div>
 
             <button class="btn btn-primary btn-lg btn-block" type="submit" id="submitButton" data-loading-text="Testing ...">Perform Testing</button>
@@ -214,7 +274,22 @@ if (isset($domain)) {
               <li><code>percentage_blocking_score</code> - A percentage score ranged from 0 to 1 representing how likely is the service blocked (1 = most likely)</li>
               <li><code>evaluation</code> - a text description of the testing result</li>
               </ul>
+        </div>
+    </div>
 
+    <div class="row">
+        <div class="col-md-12 order-md-1">
+            <h5 class="mb-3">Limitations</h4>
+            False positive scenarios:
+              <ul>
+                <li>when a domain uses CDN, load balancer, or GeoDNS that resolves to IPs belong to different ASNs</li>
+              </ul>
+            Other considerations:
+              <ul>
+                <li>unstable connection to the remote API servers</li>
+                <li>slow response time that leads to timeout</li>
+                <li>DNS query denied by ISP's DNS servers</li>
+              </ul>
         </div>
     </div>
 
