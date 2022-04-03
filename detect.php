@@ -70,13 +70,13 @@ foreach (POLLUTED_DNS_SERVER_IPS as $key => $polluted_dns_server_ip) {
 
     // Compare the detected_cn and detected_us AS numbers
     if ($as_detected_cn == $as_detected_us) {
-        $detection_result = 'no blocking detected';
+        $detection_result = 'not blocked';
         $blocked = 0;
     } elseif ($countryCode_detected_us == 'CN' || $countryCode_detected_cn == 'CN') {
-        $detection_result = 'no blocking detected';
+        $detection_result = 'not blocked';
         $blocked = 0;
     } else {
-        $detection_result = 'detected DNS poisoning';
+        $detection_result = 'possible DNS poisoning';
         $blocked = 1;
     }
 
@@ -95,10 +95,10 @@ foreach (POLLUTED_DNS_SERVER_IPS as $key => $polluted_dns_server_ip) {
     // Compare web_server_status, 
     // if the DNS matches, but the web_server_status is not matched, then the website is still blocked
     if ($blocked == 0 && $web_server_status_us !== $web_server_status_cn) {
-        $detection_result = 'detected TCP reset attack';
+        $detection_result = 'possible TCP reset attack';
         $blocked = 1;
     } elseif ($blocked == 1 && $web_server_status_us !== $web_server_status_cn) {
-        $detection_result = 'detected DNS poisoning and TCP reset attack';
+        $detection_result = 'possible DNS poisoning and TCP reset attack';
         $blocked = 1;
     }
 
@@ -146,15 +146,21 @@ $polluted_dns_server_results['percentage_blocking_score'] = $score;
 
 // Summarize result based on the pollution score and add to the polluted_dns_server_results array
 if ($score == 0) {
-    $polluted_dns_server_results['evaluation'] = 'no blocking detected';
+    $polluted_dns_server_results['evaluation'] = 'not blocked';
 } elseif ($score <= 0.5) {
-    $polluted_dns_server_results['evaluation'] = 'medium possibility of blocking detected';
+    $polluted_dns_server_results['evaluation'] = 'medium possibility of blocking';
 } else {
-    $polluted_dns_server_results['evaluation'] = 'high possibility of blocking detected';
+    $polluted_dns_server_results['evaluation'] = 'high possibility of blocking';
 }
 
 // Add code 200 to the polluted_dns_server_results array
 $polluted_dns_server_results['code'] = 200;
+
+// Get current timestamp
+$timestamp = time();
+
+// Add timestamp to the polluted_dns_server_results array
+$polluted_dns_server_results['timestamp'] = $timestamp;
 
 // Encode the array as JSON
 $polluted_dns_server_results_json = json_encode($polluted_dns_server_results, JSON_PRETTY_PRINT);
