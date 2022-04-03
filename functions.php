@@ -32,11 +32,11 @@ function api_v1($domain) {
         exit;
     }
 
-    // Detect web_server_status
-    $web_server_status = detect_web_server_status_localhost($domain);
+    // Detect web_server_status using the US server (localhost)
+    $web_server_status_us_local = detect_web_server_status_localhost($domain);
 
     // Query the remote node API
-    $api_json = query_node_api(DETECT_NODE_API_URL, $domain, $web_server_status);
+    $api_json = query_node_api(DETECT_NODE_API_URL, $domain, $web_server_status_us_local);
 
     // Validate if this is a valid JSON
     $api_array = json_decode($api_json, true);
