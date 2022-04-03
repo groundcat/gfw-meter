@@ -1,6 +1,10 @@
 # GFW detector
 
-Detect if your website is blocked in China by testing with servers at multiple locations.
+## Features
+
+- Detect if your website is blocked in a censored country by testing with ISPs at multiple locations and compare with the results of another country.
+- Keep a record of testing results in a MySQL database.
+- Web UI for admin registration and login to access a dashboard, add monitors, and get weekly summary reports.
 
 ## Approach
 
@@ -16,6 +20,18 @@ Detect if your website is blocked in China by testing with servers at multiple l
 - Get `TCPing` responses at ports `80` and `443` of IPs resolved by the Cloudflare DNS in a non-censored country.
 - Compare the TCPing responses to determine if they match.
 
+### Self protection mechanism
+
+The detection program implemented at a server in the censored country first calls external APIs for IP validation and TCP reset attack detection. This prevents the target tested server from logging the IP address of your testing node. 
+
+However, if the external TCPing API is not reachable, the program will fallback to the localhost method of testing with TCPing.
+
+Although using `cURL` could be a more reliable approach than `TCPing` and there is a function `website_content_md5()` in the `functions.php` that hashes data into a `md5` string for comparison, it is not used for now, because using this method has higher risks of your node's IP address getting logged by the target web server.
+
+### Notes on DNS surveillance
+
+There is no mechanism implemented here to protect your testing node from any DNS surveillance. The DNS query is performed locally with [Net_DNS2](https://netdns2.com/).
+
 ## Requirements
 
 - PHP 5.4+
@@ -25,7 +41,7 @@ Detect if your website is blocked in China by testing with servers at multiple l
 ## Configuration and Implementation
 
 1. Replace `REPLACE_ME` in the `config.php` file with your configurations.
-2. Deploy and configure `detect.php`, `config.php`, and `functions.php` at a server located in China (or other Internet-censored regions).
+2. Deploy and configure `detect.php`, `config.php`, and `functions.php` at a server located in a censored country.
 3. Deploy and configure `config.php`, `user/ASEngine/ASConfig.php`, and remaning files at a server located in a non-censored country.
 
 ## API
@@ -133,3 +149,14 @@ Deploy a job to schedule run `run_test.php` at an acceptable frequency.
 0 * * * * php run_test.php
 ```
 
+# Limitations
+
+## False positive scenarios
+
+- when a domain uses CDN, load balancer, or GeoDNS that resolves to IPs belong to different ASNs
+
+## Other considerations
+
+- unstable connection to the remote API servers
+- slow response time that leads to timeout
+- DNS query denied by ISP's DNS servers
