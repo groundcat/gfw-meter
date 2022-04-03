@@ -107,12 +107,12 @@ if (isset($_POST['domain_id']) && isset($_POST['enabled'])) {
                             <?php endif; ?>
                         </td>
                         <td>
-                            <?php if ($domain['latest_score'] == 0) : ?>
-                                <span class="badge badge-success"><i class="fas fa-smile"></i> <?=$domain['latest_score']?>%</span>
-                            <?php elseif ($domain['latest_score'] && $domain['latest_score'] > 0): ?>
-                                <span class="badge badge-danger"><i class="fas fa-frown"></i> <?=$domain['latest_score']?>%</span>
-                            <?php else: ?>
+                            <?php if (!isset($domain['latest_score'])) : ?>
                                 <span class="badge badge-secondary">Queued</span>
+                            <?php elseif ($domain['latest_score'] > 0): ?>
+                                <span class="badge badge-danger"><i class="fas fa-frown"></i> <?=$domain['latest_score']?>%</span>
+                            <?php elseif ($domain['latest_score'] == 0) : ?>
+                                <span class="badge badge-success"><i class="fas fa-smile"></i> <?=$domain['latest_score']?>%</span>
                             <?php endif; ?>
                         </td>
                         <td>

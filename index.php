@@ -2,6 +2,7 @@
 
 // Take domain GET request
 $domain = $_GET['domain'] ?? $_POST['domain'] ?? null;
+$shareable = $_GET['shareable'] ?? $_POST['shareable'] ?? null;
 
 // Host of the current page
 $host = $_SERVER['HTTP_HOST'];
@@ -16,7 +17,12 @@ if (isset($domain)) {
 
     // Send request to the API endpoint, follow redirects
     $api_json = api_v1($domain);
-    $pastebin_url = pastebin($api_json, $api_paste_name);
+    if ($shareable == 'yes') {
+        $pastebin_url = pastebin($api_json, $api_paste_name);
+    } else {
+        $pastebin_url = '';
+    }
+    
 } else {
     $api_json = null;
 }
@@ -55,9 +61,9 @@ if (isset($domain)) {
             <li><a href="index.php" class="nav-link px-2 text-secondary">Home</a></li>
           </ul>
 
-          <form class="col-12 col-lg-auto mb-3 mb-lg-0 me-lg-3">
-            <!-- <input class="form-control form-control-dark" target="<?php echo $_SERVER['PHP_SELF']; ?>" method="post" placeholder="Test a domain..." aria-label="Test"> -->
-          </form>
+          <!-- <form class="col-12 col-lg-auto mb-3 mb-lg-0 me-lg-3">
+            <input class="form-control form-control-dark" target="<?php echo $_SERVER['PHP_SELF']; ?>" method="post" placeholder="Test a domain..." aria-label="Test">
+          </form> -->
 
           <div class="text-end">
             <a type="button" class="btn btn-outline-light me-2" href="/user/login.php" target="_blank">Login</a>
@@ -75,7 +81,7 @@ if (isset($domain)) {
       <div class="py-5 text-center">
         
         <h2>WallMeter</h2>
-        <p class="lead">Detect if your website is blocked in China by testing with servers at multiple locations</p>
+        <p class="lead">Detect if your website is blocked in China by testing from ISPs at multiple locations</p>
         <p class="lead">从中国大陆多个地区的不同运营商检测你的网站是否被DNS污染或阻断</p>
       </div>
 
@@ -83,7 +89,7 @@ if (isset($domain)) {
         
         <div class="col-md-12 order-md-1">
           <h4 class="mb-3">Test Now</h4>
-          <form action="<?php echo $_SERVER['PHP_SELF']; ?>" method="post">
+          <form id="queryForm" action="<?php echo $_SERVER['PHP_SELF']; ?>" method="post">
 
             <?php if (!isset($domain)): ?>
             <div class="mb-3">
@@ -99,15 +105,17 @@ if (isset($domain)) {
 
             <?php if (isset($domain)): ?>
 
+            <?php if ($shareable == 'yes'): ?>
             <div class="mb-3">
-              <label for="username">Sharable Result URL</label>
+              <label>Shareable Result URL</label>
                 <div class="alert alert-success" role="alert">
                     <a href="<?php echo $pastebin_url; ?>"><?php echo $pastebin_url; ?></a>
                 </div>
             </div>
+            <?php endif; ?>
 
             <div class="mb-3">
-              <label for="username">Result in JSON format</label>
+              <label>Result in JSON format</label>
                 <pre><code>
                 </code></pre>
                 <script>
@@ -131,14 +139,14 @@ if (isset($domain)) {
             <?php endif; ?>
 
             <?php if (!isset($domain)): ?>
+              
+              <!-- Check box -->
+              <div class="custom-control custom-checkbox mb-3">
+                <input type="checkbox" class="custom-control-input" id="shareable" name="shareable" value="yes">
+                <label class="custom-control-label" for="shareable">Make it shareable</label>
+              </div>
+
             <button class="btn btn-primary btn-lg btn-block" type="submit" id="submitButton" data-loading-text="Testing ...">Perform Testing</button>
-            <script>
-              $('#submitButton').on('click', function () {
-                var $btn = $(this).button('loading')
-                // business logic...
-                $btn.button('reset')
-              })
-            </script>
             <?php endif; ?>
 
           </form>
@@ -221,8 +229,38 @@ if (isset($domain)) {
       </footer>
     </div>
 
+    <!-- Modal -->
+    <div class="modal fade" id="loadingModal" tabindex="-1" role="dialog" aria-labelledby="loadingModal" aria-hidden="true" style="z-index: 9999; background-color: rgba(0, 0, 0, 0.4);">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="loadingModalLabel">Testing...</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <p><i class="fa fa-spinner fa-spin fa-3x fa-fw"></i> Testing... Please wait for a few minutes.</p>
+            <!-- webp image -->
+            <img src="assets/img/loading.webp" width=200 alt="Loading...">
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Bootstrap core JavaScript -->
     <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <!-- bootstrap.min.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.min.js" integrity="sha384-cVKIPhGWiC2Al4u+LWgxfKTRIcfu0JTxR+EQDz/bgldoEyl4H0zUF0QKbrJ0EcQF" crossorigin="anonymous"></script>
 
+    <!-- Show modal when form queryForm is submitted -->
+    <script>
+      $('#queryForm').on('submit', function () {
+        $('#loadingModal').modal('show');
+      });
+    </script>
+    
+    
   </body>
 </html>

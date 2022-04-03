@@ -1,5 +1,7 @@
 /.idea
 .DS_Store
 ASEngine/ASConfig.php
+ASEngine/ASConfig-dev.php
+ASEngine/ASConfig-prod.php
 documentation
 .php_cs.cache
