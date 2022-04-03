@@ -9,7 +9,7 @@ if (!preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$
 }
 
 // Select the test result from database wm_tests where test_id matches
-include dirname(__FILE__) . '/user/ASEngine/AS.php';
+include dirname(__FILE__) . '/../user/ASEngine/AS.php';
 $test_result = app('db')->select(
     "SELECT test_result_json FROM `wm_tests` WHERE `test_id` = '$test_id'"
 );

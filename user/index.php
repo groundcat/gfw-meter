@@ -106,8 +106,7 @@ if (isset($_POST['domain_id']) && isset($_POST['enabled'])) {
                 <thead>
                     <tr>
                         <th>Domain</th>
-                        <th>Creation Time</th>
-                        <th>Latest Report</th>
+                        <th>Testing Reports</th>
                         <th>Latest Score %</th>
                         <th>Monitoring</th>
                         <th>Action</th>
@@ -116,12 +115,27 @@ if (isset($_POST['domain_id']) && isset($_POST['enabled'])) {
                 <?php foreach ($domains as $domain) : ?>
                     <tr class="user-row">
                         <td><?= e($domain['domain']) ?></td>
-                        <td><?= e($domain['created_time']) ?></td>
                         <td>
                             <?php if ($domain['latest_test_id']) : ?>
-                            <a href="../test_data.php?id=<?= $domain['latest_test_id'] ?>" target="_blank">
+                                
+                            <!-- Latest test link -->
+                            Latest:
+                            <a href="../v1/test_data.php?id=<?= $domain['latest_test_id'] ?>" target="_blank">
                                 <?= e($domain['latest_test_time']) ?>
                             </a>
+
+                            <br>
+
+                            <!-- Test history link -->
+                            History: 
+                            <a href="../v1/test_history.php?domain=<?= e($domain['domain']) ?>&entries=5" target="_blank">
+                                JSON
+                            </a>
+                            |
+                            <a href="../v1/test_history.php?domain=<?= e($domain['domain']) ?>&entries=5&html=1" target="_blank">
+                                HTML
+                            </a>
+
                             <?php else: ?>
                                 <span class="text-muted">Queued</span>
                             <?php endif; ?>

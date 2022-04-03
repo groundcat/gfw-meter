@@ -162,8 +162,8 @@ if (isset($domain)) {
             <div class="mb-3">
               <label>Shareable Result URL at WallMeter</label>
                 <div class="alert alert-success" role="alert">
-                    <a href="<?php echo WEBSITE_DOMAIN."/test_data.php?id=".$test_id; ?>">
-                      <?php echo WEBSITE_DOMAIN."/test_data.php?id=".$test_id; ?>
+                    <a href="<?php echo WEBSITE_DOMAIN."/v1/test_data.php?id=".$test_id; ?>">
+                      <?php echo WEBSITE_DOMAIN."/v1/test_data.php?id=".$test_id; ?>
                     </a>
                 </div>
             </div>
@@ -276,6 +276,9 @@ if (isset($domain)) {
               </ul>
         </div>
     </div>
+
+    <!-- Divider -->
+    <hr class="mb-4">
 
     <div class="row">
         <div class="col-md-12 order-md-1">
